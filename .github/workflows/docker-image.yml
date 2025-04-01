@@ -2,10 +2,7 @@ name: Docker Image CI
 
 on:
   push:
-    tags: [ '*' ]
-    #branches: [ 'main' ]
-  schedule:
-    - cron: '0 0 1 * *'
+    branches: [ 'testflow' ]
 
 env:
   REGISTRY: ghcr.io
@@ -26,14 +23,6 @@ jobs:
         fetch-depth: 0
         fetch-tags: true
 
-    - name: Get the latest tag
-      run: |
-        LATEST_TAG=$(git describe --tags $(git rev-list --tags --max-count=1))
-        echo "LATEST_TAG=$LATEST_TAG" >> $GITHUB_ENV
-
-    - name: Checkout to the latest tag
-      run: git checkout ${{ env.LATEST_TAG }}
-
     - name: Log in to the Container registry
       uses: docker/login-action@65b78e6e13532edd9afa3aa52ac7964289d1a9c1
       with:
@@ -47,9 +36,9 @@ jobs:
       with:
         images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
         tags: |
-          type=ref,event=tag
-          type=raw,value=${{ env.LATEST_TAG }}-{{date 'YYYYMMDD'}}
-          type=raw,value=latest,enable=${{ github.event_name == 'schedule' }}
+          #type=ref,event=tag
+          #type=raw,value=${{ env.LATEST_TAG }}-{{date 'YYYYMMDD'}}
+          type=raw,value=latest
           #type=semver,pattern={{raw}}
           #type=sha,prefix=
 
@@ -96,27 +85,29 @@ jobs:
     - name: Parse Trivy report
       id: parse-trivy-report
       run: |
+        cat trivy-report.txt
         report=$(cat trivy-report.txt | grep -B 2 Total)
         echo "trivy_report<<EOF" >> $GITHUB_OUTPUT
         echo "$report" >> $GITHUB_OUTPUT
         echo "EOF" >> $GITHUB_OUTPUT
+        cat $GITHUB_OUTPUT
 
-  notification-discord:
-    runs-on: ubuntu-latest
-    needs: [ build-and-push-image, scan-image ]
-    steps:
-    - name: Discord notification
-      env:
-        DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK }}
-      uses: Ilshidur/action-discord@master
-      with:
-        args: |
-          The project {{ EVENT_PAYLOAD.repository.full_name }} has been built.
-
-          Image:
-          **${{ needs.build-and-push-image.outputs.tags }}**
-
-          Scan summary:
-          ```
-          ${{ needs.scan-image.outputs.trivy_report }}
-          ```
+#  notification-discord:
+#    runs-on: ubuntu-latest
+#    needs: [ build-and-push-image, scan-image ]
+#    steps:
+#    - name: Discord notification
+#      env:
+#        DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK }}
+#      uses: Ilshidur/action-discord@master
+#      with:
+#        args: |
+#          The project {{ EVENT_PAYLOAD.repository.full_name }} has been built.
+#
+#          Image:
+#          **${{ needs.build-and-push-image.outputs.tags }}**
+#
+#          Scan summary:
+#          ```
+#          ${{ needs.scan-image.outputs.trivy_report }}
+#          ```

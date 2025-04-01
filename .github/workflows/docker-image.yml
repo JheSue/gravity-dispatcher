@@ -88,11 +88,11 @@ jobs:
       id: parse-trivy-report
       run: |
         cat trivy-report.txt
-        report=$(cat trivy-report.txt | grep -B 2 Total)
-        echo "trivy_report<<EOF" >> $GITHUB_OUTPUT
-        echo "$report" >> $GITHUB_OUTPUT
-        echo "EOF" >> $GITHUB_OUTPUT
-        cat $GITHUB_OUTPUT
+#        report=$(cat trivy-report.txt | grep -B 2 Total)
+#        echo "trivy_report<<EOF" >> $GITHUB_OUTPUT
+#        echo "$report" >> $GITHUB_OUTPUT
+#        echo "EOF" >> $GITHUB_OUTPUT
+#        cat $GITHUB_OUTPUT
 
 #  notification-discord:
 #    runs-on: ubuntu-latest
